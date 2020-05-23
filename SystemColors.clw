@@ -223,7 +223,7 @@ Window WINDOW('System Colors Alpha Order - Click to copy to Clipboard'),AT(,,320
         BUTTON('BtnShadow'                 ),AT(4,4+16*13  ,92,13),USE(?ColorBtn:16),MSG('80000010h COLOR:BtnShadow'              ),LEFT
         BUTTON('BtnText'                   ),AT(4,4+16*14  ,92,13),USE(?ColorBtn:18),MSG('80000012h COLOR:BtnText'                ),right
         BUTTON('CaptionText'               ),AT(4,4+16*15  ,92,13),USE(?ColorBtn:09),MSG('80000009h COLOR:CaptionText'            ),right
-        BUTTON('Desktop    (Background)'   ),AT(4,4+16*16  ,92,13),USE(?ColorBtn_00),MSG('80000000h COLOR:Background'             ),LEFT
+        BUTTON('Desktop    (Background)'   ),AT(4,4+16*16  ,92,13),USE(?ColorBtn_00),MSG('80000001h COLOR:Background'             ),LEFT
         BUTTON('GradientActiveCaption'     ),AT(4,4+16*17  ,92,13),USE(?ColorBtn:27),MSG('8000001Bh COLOR:GradientActiveCaption'  ),LEFT
         BUTTON('GradientInactiveCaption'   ),AT(164,4+16*00 ,92,13),USE(?ColorBtn:28),MSG('8000001Ch COLOR:GradientInactiveCaption'),LEFT
         BUTTON('GrayText'                  ),AT(164,4+16*01 ,92,13),USE(?ColorBtn:17),MSG('80000011h COLOR:GrayText'               ),right
