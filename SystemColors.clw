@@ -14,6 +14,12 @@ SetupBtns4Color         PROCEDURE(BYTE Right3D=0)
 AcceptedColorBtn2Clip   PROCEDURE(*STRING InfoStr)
 BtnText2ColorEquate     PROCEDURE(LONG BtnFEQ),STRING
 SysColorTip             PROCEDURE(LONG BtnFEQ, STRING ClrH, LONG ClrL)
+GetSysColorRGB          PROCEDURE(LONG SysColor),STRING
+FormatRGB               PROCEDURE(LONG RGBColor),STRING
+Hex6                    PROCEDURE(LONG),STRING
+    MODULE('Win32')
+        GetSysColor(LONG nIndex),LONG,PASCAL,DLL(1)
+    END
   END
 !Dbg STRING(2000)
   CODE
@@ -24,8 +30,9 @@ Info  STRING(4000)
 GrayCB BYTE(1)
 EntryS STRING('ABCDEFGHIJKLMNOPQRSTUVWXYZ {60}')
 EntryDis STRING('Disabled GrayText ABCDEFGHIJKLMNOPQRSTUVWXYZ {60}')
-    
-Window WINDOW('System Colors by Purpose - Click to copy to Clipboard'),AT(,,444,281),CENTER,GRAY,SYSTEM, |
+EntryRdO STRING('ReadOnly Gray  ABCDEFGHIJKLMNOPQRSTUVWXYZ {60}')
+        
+Window WINDOW('System Colors by Purpose - Click to copy to Clipboard - Right click for options'),AT(,,444,281),CENTER,GRAY,SYSTEM, |
             ICON('SyCoIcon.Ico'),STATUS,FONT('Segoe UI',9),RESIZE
         BUTTON('3DDkShadow'),AT(235,157,86,13),USE(?ColorBtn:21),MSG('80000015h COLOR:3DDkShadow'),LEFT
         BUTTON('3DFace       (BtnFace)'),AT(235,109,86,13),USE(?ColorBtn_15),MSG('8000000Fh COLOR:BtnFace'), |
@@ -46,9 +53,9 @@ Window WINDOW('System Colors by Purpose - Click to copy to Clipboard'),AT(,,444,
         BUTTON('BtnText'),AT(110,93,57,13),USE(?ColorBtn:18),MSG('80000012h COLOR:BtnText'),RIGHT
         BUTTON('CaptionText'),AT(6,5,60,13),USE(?ColorBtn:09),MSG('80000009h COLOR:CaptionText'),RIGHT
         BUTTON('Desktop (Bkg)'),AT(338,21,61,13),USE(?ColorBtn_01),MSG('80000001h COLOR:Background'),LEFT
-        BUTTON('Gradient Ac Cap'),AT(6,37,60,13),USE(?ColorBtn:27),MSG('8000001Bh COLOR:GradientActi' & |
+        BUTTON('Gradient Act Cap'),AT(6,37,60,13),USE(?ColorBtn:27),MSG('8000001Bh COLOR:GradientActi' & |
                 'veCaption'),LEFT
-        BUTTON('Gradient InAc Cap'),AT(110,37,76,13),USE(?ColorBtn:28),MSG('8000001Ch COLOR:Gradient' & |
+        BUTTON('Gradient InAct Cap'),AT(110,37,76,13),USE(?ColorBtn:28),MSG('8000001Ch COLOR:Gradient' & |
                 'InactiveCaption'),LEFT
         BUTTON('GrayText'),AT(6,109,60,13),USE(?ColorBtn:17),MSG('80000011h COLOR:GrayText'),RIGHT
         BUTTON('Highlight'),AT(6,173,60,13),USE(?ColorBtn:13),MSG('8000000Dh COLOR:Highlight'),LEFT
@@ -76,7 +83,9 @@ Window WINDOW('System Colors by Purpose - Click to copy to Clipboard'),AT(,,444,
         TEXT,AT(6,225,314,49),USE(Info),VSCROLL,COLOR(0D5EFFFH)
         BUTTON('Colors Alpha Order'),AT(350,255,70,19),USE(?AlphaBtn),TIP('Open the Alpha Order Window')
         BOX,AT(160,203,59,15),USE(?Sample:BOX),COLOR(COLOR:Black),LINEWIDTH(1)
-        STRING('SAMPLE '),AT(161,204,57,13),USE(?Sample),CENTER,FONT(,12)
+        STRING('SAMPLE '),AT(161,204,57,13),USE(?Sample),CENTER,FONT(,12) 
+        BUTTON,AT(226,202,12,10),USE(?PickFCbtn),SKIP,ICON(ICON:Ellipsis),FLAT,TIP('Change Text Color of Sample')
+        BUTTON,AT(226,210,12,10),USE(?PickBCbtn),SKIP,ICON(ICON:Ellipsis),FLAT,TIP('Change Back Color of Sample')        
         GROUP,AT(4,68,98,17),USE(?ActiveCap:Group)
             BOX,AT(6,70,89,13),USE(?ActiveCap:BOX),COLOR(COLOR:Black),FILL(COLOR:ACTIVECAPTION), |
                     LINEWIDTH(1)
@@ -115,6 +124,8 @@ Window WINDOW('System Colors by Purpose - Click to copy to Clipboard'),AT(,,444,
                 '<13><10>Select Text with mouse to see Hightlight colors<13,10>Below Entry is Disabl' & |
                 'ed showing Gray Text'),READONLY
         ENTRY(@s80),AT(6,204,59,11),USE(EntryDis),DISABLE,TIP('Disabled control shows Gray Text')
+        ENTRY(@s80),AT(69,204,50,11),USE(EntryRdO),FONT(,,COLOR:GRAYTEXT),TIP('ReadOnly control using Color:GrayText<13>' & |
+                '<10>so looks Disabled but user can copy text.')        
         BOX,AT(403,5,25,13),USE(?BOX:SizerBtnColor),COLOR(COLOR:Black),FILL(0C0FFFFH),HIDE,LINEWIDTH(1)
         BOX,AT(295,5,44,13),USE(?BOX:SizerGap),COLOR(COLOR:Black),FILL(COLOR:Olive),HIDE,LINEWIDTH(1)
         BUTTON('Sample'),AT(110,162,30),USE(?SampleBtn),SKIP,TIP('Sample Button')
@@ -126,12 +137,14 @@ CBWndPrvCls  CBWndPreviewClass
     !end of OMIT('**END**', OmitWndPrv)
 BTx STRING(30)
 CP  LONG
+CV  LONG
+TorB BYTE
 SamTxt  STRING(80)     
 SamBkg  STRING(80)     
     CODE
     OPEN(Window)
-    ?Info{PROP:Background}=80000018h
-    ?Info{PROP:FontColor}=80000017h
+    ?Info{PROP:Background}=COLOR:InfoBackground !80000018h
+    ?Info{PROP:FontColor} =COLOR:InfoText       !80000017h
 
     ?ActiveCap:Txt{PROP:FontColor}=COLOR:CaptionText
     ?ActiveCap:BOX{PROP:Color}=COLOR:ActiveBorder
@@ -170,16 +183,24 @@ SamBkg  STRING(80)
         CASE EVENT()
         OF EVENT:OpenWindow 
             ?EntryS{PROP:SelStart}=5
-            ?EntryS{PROP:SelEnd}=10
+            ?EntryS{PROP:SelEnd}=10 
+        OF EVENT:AlertKey ; IF KEYCODE()=MouseRight THEN POST(EVENT:Accepted,?).
         END 
         CASE ACCEPTED() 
         OF 0
         OF ?GrayCB ; 0{PROP:Gray}=GRayCB ; DISPLAY 
         OF ?AlphaBtn ; START(ColorsAlpha)
+        OF ?PickFCbtn OROF ?PickBCbtn ; DO SamplePickRtn        
         ELSE
             BTx=?{PROP:TExt}
-            AcceptedColorBtn2Clip(Info) ! ; EntryS=CLIPBOARD() ; DISPLAY
-            IF INSTRING('Text',BTx,1) OR INSTRING('HotLight',BTx,1) THEN 
+            AcceptedColorBtn2Clip(Info) ! ; EntryS=CLIPBOARD() ; DISPLAY 
+            TorB=CHOOSE(INSTRING('Text',BTx,1) OR INSTRING('HotLight',BTx,1),1,2)
+            IF KeyCode()=MouseRight THEN 
+               TorB=Popup('Set as Sample Text Color|Set as Sample Background')
+               IF ~TorB THEN CYCLE.
+            END
+!       IF INSTRING('Text',BTx,1) OR INSTRING('HotLight',BTx,1) THEN 
+            IF TorB=1 THEN
                CP=PROP:FontColor
                SamTxt=?{PROP:Msg}
             ELSE 
@@ -187,11 +208,28 @@ SamBkg  STRING(80)
                SamBkg=?{PROP:Msg}
             END
             ?Sample{CP}=?{'U_ClrL'}
-            ?Sample{PROP:Tip}='Text: <9>' & CLIP(SamTxt) &'<13,10>Back: <9>' & CLIP(SamBkg)
+            DO SampleTipRtn 
         END 
 
     END
     RETURN
+SampleTipRtn ROUTINE
+    ?Sample{PROP:Tip}='Text: <9>' & CLIP(SamTxt) &' <13,10,160>{80}'&|
+               '<13,10>Back: <9>' & CLIP(SamBkg) &' '
+SamplePickRtn ROUTINE
+    TorB=CHOOSE(?=?PickFCbtn,1,2)
+    CP=CHOOSE(TorB,PROP:FontColor,PROP:Background)
+    CV=?Sample{CP}
+    IF CV >= 80000000h THEN CV=GetSysColor(BAND(CV,0FFh)).
+    IF COLORDIALOG('Select Color for ' & CHOOSE(TorB,'Font','Background'),CV) THEN
+       ?Sample{CP}=CV
+       EXECUTE TorB
+       SamTxt=FormatRGB(CV) &'<160>Long=' & CV
+       SamBkg=FormatRGB(CV) &'<160>Long=' & CV
+       END
+       DO SampleTipRtn 
+    END
+
 !=====================================================================
 ColorsAlpha     PROCEDURE()
 Info  STRING(4000) 
@@ -336,6 +374,7 @@ B LONG
 FTxt STRING(64) 
 ClrH STRING(9) 
 ClrL LONG
+SysC LONG
 QX LONG
 FldQ QUEUE
 FEQ     LONG
@@ -351,6 +390,8 @@ FEQ     LONG
         F=FldQ:FEQ
         ClrH=UPPER(F{PROP:Msg})  ; IF ClrH[9]<>'H' THEN CYCLE.
         ClrL=EVALUATE(ClrH)
+        SysC=BAND(ClrL,0FFh)
+        F{PROP:Msg}=F{PROP:Msg} &' - SysColor(' & SysC &') ' & GetSysColorRGB(SysC)
         FTxt=F{PROP:Text}        
         GETPOSITION(F,X,Y,W,H)
         B=CREATE(0,Create:BOX)
@@ -371,14 +412,15 @@ FEQ     LONG
         F{'U_ClrL'}=ClrL 
 !        Dbg=CLIP(Dbg) & '<13,10>F=' & F &' B=' & B &'  '&  FTxt 
         F{PROP:Flat}=1
-        F{PROP:Skip}=1
+       ! F{PROP:Skip}=1
+        F{PROP:ALRT,255}=MouseRight
     END 
 !-----------------
 SysColorTip PROCEDURE(LONG BtnFEQ, STRING ClrH, LONG ClrL)
 T STRING(1024)
 SC LONG
     CODE
-    SC=BAND(ClrL,7FFFFFFFh) 
+    SC=BAND(ClrL,0FFh) 
     CASE SC 
     OF 0  ; T='0  COLOR_ScrollBar              <13,10>Scroll bar gray area.'                                                                                                                                                                                                                                       
     OF 1  ; T='1  COLOR_Background             <13,10>Desktop.'                                                                                                                                                                                                                                                    
@@ -414,6 +456,42 @@ SC LONG
     ELSE  ; T= SC & ' ?? Unknown ??' ; STOP('SC=' & SC &' SysColorTip') 
     END
     T= CLIP(T) &'<13,10>'& |
-        '<13,10>' & BtnText2ColorEquate(BtnFEQ) & '  Windows SysColor=' & SC
+        '<13,10>' & BtnText2ColorEquate(BtnFEQ) !& '<13,10>Windows SysColor(' & SC &')  '& GetSysColorRGB(SC)
     BtnFEQ{PROP:Tip}=T
-    RETURN 
+    RETURN
+!-------------
+GetSysColorRGB PROCEDURE(LONG SysColor)
+    CODE
+    RETURN FormatRGB(GetSysColor(BAND(SysColor,0FFh)))
+!-------------
+FormatRGB PROCEDURE(LONG C)
+B LONG
+RGB PSTRING(16)
+    CODE
+    B=C
+    LOOP 3 TIMES
+        RGB=RGB &',' & BAND(B,0FFh) ; B=BSHIFT(B,-8)
+    END
+    IF B THEN RGB=' ?'&B&'? ' & RGB. !C > FFFFFFh is bug
+    RGB[1]='('
+    RETURN 'RGB' & RGB &') ' & Hex6(C)
+!-------------
+Hex6 PROCEDURE(LONG Lng)
+LAS LONG,AUTO 
+L   BYTE,DIM(4),OVER(LAS)
+Hex STRING('0123456789ABCDEF'),STATIC
+HX  STRING(9),AUTO 
+  CODE
+    LAS = BAND(BSHIFT(Lng, -4),0F0F0F0Fh) + 01010101h
+    HX[1]=HEX[L[4]]
+    HX[3]=HEX[L[3]]
+    HX[5]=HEX[L[2]]
+    HX[7]=HEX[L[1]]
+    LAS=BAND(Lng,0F0F0F0Fh)  + 01010101h
+    HX[2]=HEX[L[4]]
+    HX[4]=HEX[L[3]]
+    HX[6]=HEX[L[2]]
+    HX[8]=HEX[L[1]]
+    HX[9]='h' 
+    RETURN CHOOSE(HX[1:2]='00',HX[3:9],HX)
+!---
