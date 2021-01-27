@@ -22,7 +22,7 @@ Example of system colors used to highlight a specific list column. The heading i
   ?List{PropList:DefHdrBackColor}  = COLOR:BtnFace
   ?List{PropList:DefHdrTextColor}  = COLOR:BtnText
   ?List{PROPLIST:HdrSortBackColor} = COLOR:Highlight     
-  ?List{PROPList:HdrSortTextColor} = COLOR:HighlightText 
+  ?List{PROPList:HdrSortTextColor} = COLOR:HighlightText
   ?List{PROPList:SortBackColor}    = COLOR:InfoBackground  !80000018h
   ?List{PROPList:SortTextColor}    = COLOR:InfoText        !80000017h
   ?List{PROPLIST:SortColumn}       = 4  !Highlight column 4
@@ -34,11 +34,25 @@ Also included the missing equates example I submitted to SV. This has the equate
 ![Screen Shot](images/missing.png)
 ```
 COLOR:3DDkShadow              EQUATE (80000015H)  !Dark shadow for 3D display elements
-COLOR:3DLight                 EQUATE (80000016H)  !Light color for 3D display elements 
+COLOR:3DLight                 EQUATE (80000016H)  !Light color for 3D display elements
 COLOR:InfoText                EQUATE (80000017H)  !Text color for tooltip controls
 COLOR:InfoBackground          EQUATE (80000018H)  !Background color for tooltip controls
 COLOR:HotLight                EQUATE (8000001AH)  !Color for a hyperlink or hot-tracked item.
-COLOR:GradientActiveCaption   EQUATE (8000001BH)  !Right side color in color gradient of active window title bar. 
-COLOR:GradientInactiveCaption EQUATE (8000001CH)  !Right side color in color gradient of inactive window title bar. 
-COLOR:MenuHighlight           EQUATE (8000001DH)  !Color to highlight menu items when the menu appears as a flat menu. 
+COLOR:GradientActiveCaption   EQUATE (8000001BH)  !Right side color in color gradient of active window title bar.
+COLOR:GradientInactiveCaption EQUATE (8000001CH)  !Right side color in color gradient of inactive window title bar.
+COLOR:MenuHighlight           EQUATE (8000001DH)  !Color to highlight menu items when the menu appears as a flat menu.
 ```
+
+## Other Color Themes - High Contrast
+
+Users can choose various color themes. Some are dark themes. This is why it is import to specify both Text and Background Colors. If you only specified text as Red how would it look on the very orange below? Special thanks to Peter Petropoulos. He's not only a colorful guy, he was very helpful in providing these captures to me.
+
+![Screen Shot](images/peter_p/bronze_1.png)
+
+![Screen Shot](images/peter_p/bronze_2.png)
+
+![Screen Shot](images/peter_p/red_1.png)
+
+![Screen Shot](images/peter_p/blue_equates.png)
+
+![Screen Shot](images/peter_p/black_equates.png)
