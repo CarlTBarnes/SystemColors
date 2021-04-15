@@ -1,3 +1,11 @@
+!SystemColors by Carl Barnes (c) 2019 released under the MIT License  
+!------------------------------------------------------------------------------
+! View Windows System Colors grouped by Purpose, or Alpha, or Equate Number.
+!------------------------------------------------------------------------------
+! 22-May-20 Published on GitHub
+! 23-May-20 RGB colors and Right-Click Popup
+! 15-Apr-20 RGB format better as RGB(1,2,3) = 123456h
+!------------------------------------------------------------------------------
     PROGRAM
     INCLUDE 'KeyCodes.CLW'
 
@@ -347,7 +355,7 @@ pCB  PSTRING(128)
     RETURN 
 !============================================
 BtnText2ColorEquate PROCEDURE(LONG F)
-M    STRING(80)    !MSG('80000008h COLOR:WindowText')  
+M    STRING(99)    !83 bytes: 8000001Ch COLOR:GradientInactiveCaption - SysColor(28) - RGB(215,228,242) = F2E4D7h
                    !     123456789 1
 Txt  STRING(80)    !'3DShadow   (BtnShadow)   '
 P LONG             !            P
@@ -356,8 +364,9 @@ AKA  STRING(80)    ! [aka  3DShadow ]'
     M=F{PROP:MSG}
     Txt=F{PROP:Text}
     P=INSTRING('(',Txt)
-    IF P THEN  AKA='  [aka Color_' & CLIP(SUB(Txt,1,P-1)) &']'.
-    RETURN(CLIP(LEFT(SUB(M,10,70))) & '  Equate(' & M[1:9] &')' & CLIP(AKA) )    
+    IF P THEN  AKA='  [aka Color_' & CLIP(SUB(Txt,1,P-1)) &']'. 
+    !   IF LEN(CLIP(M))>83 THEN Message(LEN(CLIP(M)) & '||M=' & M,'debug',,,,MSGMODE:CANCOPY).
+    RETURN(CLIP(LEFT(SUB(M,10,89))) & ' - Equate(' & M[1:9] &')' & CLIP(AKA) )    
 !==================================================================
 SetupBtns4Color   PROCEDURE(BYTE Right3D=0)
 F LONG
@@ -391,7 +400,7 @@ FEQ     LONG
         ClrH=UPPER(F{PROP:Msg})  ; IF ClrH[9]<>'H' THEN CYCLE.
         ClrL=EVALUATE(ClrH)
         SysC=BAND(ClrL,0FFh)
-        F{PROP:Msg}=F{PROP:Msg} &' - SysColor(' & SysC &') ' & GetSysColorRGB(SysC)
+        F{PROP:Msg}=F{PROP:Msg} &' - SysColor(' & SysC &') - ' & GetSysColorRGB(SysC)
         FTxt=F{PROP:Text}        
         GETPOSITION(F,X,Y,W,H)
         B=CREATE(0,Create:BOX)
@@ -474,7 +483,7 @@ RGB PSTRING(16)
     END
     IF B THEN RGB=' ?'&B&'? ' & RGB. !C > FFFFFFh is bug
     RGB[1]='('
-    RETURN 'RGB' & RGB &') ' & Hex6(C)
+    RETURN 'RGB' & RGB &') = ' & Hex6(C)    !RGB(123,123,123) = ######h
 !-------------
 Hex6 PROCEDURE(LONG Lng)
 LAS LONG,AUTO 
